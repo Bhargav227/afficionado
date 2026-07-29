@@ -1,0 +1,344 @@
+"""
+Afficionado Coffee Roasters — Sales Intelligence Dashboard
+Streamlit app for the Product Optimization & Revenue Contribution Analysis project.
+Run locally with:  streamlit run app.py
+"""
+
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# PAGE CONFIG + BRAND STYLE
+# ---------------------------------------------------------------------------
+st.set_page_config(
+    page_title="Afficionado Coffee Roasters — Sales Intelligence",
+    page_icon="☕",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+BROWN = "#6B4423"
+BROWN_DARK = "#3E2010"
+TAN = "#C49A6C"
+TERRACOTTA = "#D4845A"
+GOLD = "#D4A853"
+GREEN = "#27AE60"
+BLUE = "#2980B9"
+AMBER = "#F39C12"
+RED = "#E74C3C"
+
+SEG_COLORS = {"Hero": GREEN, "Premium": BLUE, "Long Tail": AMBER, "Underperforming": RED}
+ABC_COLORS = {"A": GREEN, "B": AMBER, "C": RED}
+CAT_PALETTE = [BROWN, TAN, TERRACOTTA, GOLD, GREEN, BLUE, AMBER, "#8A5A32", "#3E2010"]
+
+st.markdown(f"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+html, body, [class*="css"]  {{ font-family: 'Inter', sans-serif; }}
+h1, h2, h3 {{ font-family: 'Fraunces', serif !important; color: {BROWN_DARK}; }}
+.stApp {{ background-color: #FAF7F2; }}
+[data-testid="stMetric"] {{
+    background-color: #FFFFFF; border: 1px solid #E7DFD3; border-left: 4px solid {GOLD};
+    border-radius: 10px; padding: 14px 16px 8px 16px;
+}}
+[data-testid="stMetricLabel"] {{ color: #7A6656; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .04em; }}
+[data-testid="stMetricValue"] {{ color: {BROWN_DARK}; font-weight: 700; }}
+section[data-testid="stSidebar"] {{ background-color: #FFFFFF; border-right: 1px solid #E7DFD3; }}
+.roast-rule {{ height: 4px; width: 64px; border-radius: 2px; margin: 4px 0 18px 0;
+    background: linear-gradient(90deg, #E8D4B8, {TAN}, #8A5A32, {BROWN_DARK}); }}
+</style>
+""", unsafe_allow_html=True)
+
+DATA_DIR = Path(__file__).parent / "data"
+
+
+# ---------------------------------------------------------------------------
+# DATA LOADING
+# ---------------------------------------------------------------------------
+@st.cache_data
+def load_data():
+    fact = pd.read_csv(DATA_DIR / "coffee_features.csv")
+    prod_master = pd.read_csv(DATA_DIR / "product_summary.csv")
+    store_master = pd.read_csv(DATA_DIR / "store_summary.csv")
+
+    def fix_store(n):
+        return "Hell's Kitchen" if str(n).strip().lower() == "hell's kitchen" else str(n).strip()
+
+    fact["store_location"] = fact["store_location"].apply(fix_store)
+    store_master["store_location"] = store_master["store_location"].apply(fix_store)
+    return fact, prod_master, store_master
+
+
+fact, prod_master, store_master = load_data()
+
+ALL_STORES = sorted(fact["store_location"].unique())
+ALL_CATEGORIES = sorted(fact["product_category"].unique())
+
+# ---------------------------------------------------------------------------
+# SIDEBAR — FILTERS
+# ---------------------------------------------------------------------------
+st.sidebar.markdown("### ☕ Afficionado Coffee Roasters")
+st.sidebar.caption("Sales Intelligence — Filters")
+st.sidebar.markdown("---")
+
+
+def reset_filters():
+    for k in ["f_stores", "f_categories", "f_types", "f_topn"]:
+        if k in st.session_state:
+            del st.session_state[k]
+
+
+st.sidebar.multiselect("Store Location", ALL_STORES, default=ALL_STORES, key="f_stores")
+st.sidebar.multiselect("Product Category", ALL_CATEGORIES, default=ALL_CATEGORIES, key="f_categories")
+
+types_available = sorted(
+    fact.loc[fact["product_category"].isin(st.session_state.f_categories), "product_type"].unique()
+)
+# keep only still-valid selections when category changes; default to all available
+prior_types = st.session_state.get("f_types", types_available)
+valid_default = [t for t in prior_types if t in types_available] or types_available
+st.sidebar.multiselect("Product Type", types_available, default=valid_default, key="f_types")
+
+st.sidebar.slider("Top-N Products (for charts below)", min_value=3, max_value=30, value=10, key="f_topn")
+
+st.sidebar.markdown("---")
+st.sidebar.button("↺ Reset all filters", on_click=reset_filters, width='stretch')
+
+st.sidebar.markdown("---")
+st.sidebar.caption(
+    "Data: single-year transaction log across 3 NYC cafés — "
+    "Lower Manhattan, Hell's Kitchen, Astoria."
+)
+
+# ---------------------------------------------------------------------------
+# APPLY FILTERS
+# ---------------------------------------------------------------------------
+filtered = fact[
+    fact["store_location"].isin(st.session_state.f_stores)
+    & fact["product_category"].isin(st.session_state.f_categories)
+    & fact["product_type"].isin(st.session_state.f_types)
+].copy()
+
+TOP_N = st.session_state.f_topn
+
+# ---------------------------------------------------------------------------
+# HEADER
+# ---------------------------------------------------------------------------
+st.markdown("<div style='font-size:0.8rem;font-weight:700;color:#D4845A;letter-spacing:.1em;'>PRODUCT OPTIMIZATION & REVENUE CONTRIBUTION ANALYSIS</div>", unsafe_allow_html=True)
+st.markdown("# How the roastery is performing")
+st.markdown("<div class='roast-rule'></div>", unsafe_allow_html=True)
+
+if filtered.empty:
+    st.warning("No data matches the current filter selection. Try widening your filters in the sidebar.")
+    st.stop()
+
+# ---------------------------------------------------------------------------
+# KPI ROW
+# ---------------------------------------------------------------------------
+total_revenue = filtered["revenue"].sum()
+total_products = filtered["product_id"].nunique()
+total_txns = len(filtered)
+total_units = filtered["transaction_qty"].sum()
+aov = total_revenue / total_txns if total_txns else 0
+
+k1, k2, k3, k4, k5 = st.columns(5)
+k1.metric("Total Revenue", f"${total_revenue:,.0f}")
+k2.metric("Total Transactions", f"{total_txns:,}")
+k3.metric("Units Sold", f"{total_units:,}")
+k4.metric("Average Order Value", f"${aov:,.2f}")
+k5.metric("Products in View", f"{total_products}")
+
+st.write("")
+
+# ---------------------------------------------------------------------------
+# PRODUCT-LEVEL AGGREGATION (recomputed live from the filtered transactions)
+# ---------------------------------------------------------------------------
+prod_agg = (
+    filtered.groupby(["product_id", "product_detail", "product_category", "product_type"], as_index=False)
+    .agg(revenue=("revenue", "sum"), units=("transaction_qty", "sum"), transactions=("transaction_id", "count"))
+)
+prod_agg["avg_price"] = prod_agg["revenue"] / prod_agg["units"].replace(0, pd.NA)
+prod_agg = prod_agg.merge(prod_master[["product_id", "abc_class", "segment"]], on="product_id", how="left")
+
+total_rev_all = prod_agg["revenue"].sum()
+prod_agg["revenue_pct"] = prod_agg["revenue"] / total_rev_all if total_rev_all else 0
+prod_agg = prod_agg.sort_values("revenue", ascending=False).reset_index(drop=True)
+prod_agg["revenue_rank"] = prod_agg["revenue"].rank(ascending=False, method="dense").astype(int)
+prod_agg["cum_revenue_pct"] = prod_agg["revenue"].cumsum() / total_rev_all if total_rev_all else 0
+prod_agg["volume_rank"] = prod_agg["units"].rank(ascending=False, method="dense").astype(int)
+prod_agg["rank_delta"] = prod_agg["volume_rank"] - prod_agg["revenue_rank"]
+
+# ---------------------------------------------------------------------------
+# TABS
+# ---------------------------------------------------------------------------
+tab_overview, tab_products, tab_pareto, tab_table = st.tabs(
+    ["📊 Overview", "🏆 Product Analysis", "📈 Pareto & Segmentation", "🔍 Data Table"]
+)
+
+# ===================== TAB 1: OVERVIEW =====================
+with tab_overview:
+    c1, c2 = st.columns([1.3, 1])
+
+    with c1:
+        st.subheader("Revenue by Category")
+        cat_rev = filtered.groupby("product_category", as_index=False)["revenue"].sum().sort_values("revenue", ascending=False)
+        fig = px.bar(cat_rev, x="revenue", y="product_category", orientation="h",
+                     color="product_category", color_discrete_sequence=CAT_PALETTE,
+                     labels={"revenue": "Revenue ($)", "product_category": ""})
+        fig.update_layout(showlegend=False, yaxis={"categoryorder": "total ascending"}, height=380,
+                           plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig, width='stretch')
+
+    with c2:
+        st.subheader("Revenue by Store")
+        store_rev = filtered.groupby("store_location", as_index=False)["revenue"].sum()
+        fig = px.pie(store_rev, names="store_location", values="revenue", hole=0.55,
+                     color="store_location",
+                     color_discrete_map={"Lower Manhattan": BROWN, "Hell's Kitchen": TAN, "Astoria": TERRACOTTA})
+        fig.update_layout(height=380, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig, width='stretch')
+
+    st.subheader("Revenue by Time Slot")
+    slot_order = ["Morning", "Afternoon", "Evening", "Night"]
+    slot_rev = filtered.groupby("time_slot", as_index=False)["revenue"].sum()
+    slot_rev["time_slot"] = pd.Categorical(slot_rev["time_slot"], categories=slot_order, ordered=True)
+    slot_rev = slot_rev.sort_values("time_slot")
+    fig = px.bar(slot_rev, x="time_slot", y="revenue", color="time_slot",
+                 color_discrete_map={"Morning": GOLD, "Afternoon": BROWN, "Evening": BROWN_DARK, "Night": BLUE},
+                 labels={"revenue": "Revenue ($)", "time_slot": ""})
+    fig.update_layout(showlegend=False, height=320, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
+    st.plotly_chart(fig, width='stretch')
+
+    hour_rev = filtered.groupby("hour", as_index=False)["revenue"].sum()
+    peak_hour = int(hour_rev.loc[hour_rev["revenue"].idxmax(), "hour"])
+    st.caption(f"⏰ Peak trading hour in the current filter selection: **{peak_hour:02d}:00**")
+
+# ===================== TAB 2: PRODUCT ANALYSIS =====================
+with tab_products:
+    top_rev = prod_agg.nsmallest(TOP_N, "revenue_rank")
+    top_vol = prod_agg.nsmallest(TOP_N, "volume_rank")
+    bottom_rev = prod_agg.nlargest(TOP_N, "revenue_rank")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader(f"Top {TOP_N} Products — Revenue")
+        fig = px.bar(top_rev.sort_values("revenue"), x="revenue", y="product_detail", orientation="h",
+                     color="segment", color_discrete_map=SEG_COLORS,
+                     labels={"revenue": "Revenue ($)", "product_detail": ""})
+        fig.update_layout(height=420, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0),
+                           legend=dict(orientation="h", yanchor="bottom", y=1.02))
+        st.plotly_chart(fig, width='stretch')
+
+    with c2:
+        st.subheader(f"Top {TOP_N} Products — Units Sold")
+        fig = px.bar(top_vol.sort_values("units"), x="units", y="product_detail", orientation="h",
+                     color="segment", color_discrete_map=SEG_COLORS,
+                     labels={"units": "Units Sold", "product_detail": ""})
+        fig.update_layout(height=420, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0),
+                           legend=dict(orientation="h", yanchor="bottom", y=1.02))
+        st.plotly_chart(fig, width='stretch')
+
+    st.subheader(f"Bottom {TOP_N} Products — Revenue")
+    fig = px.bar(bottom_rev.sort_values("revenue", ascending=False), x="revenue", y="product_detail", orientation="h",
+                 color_discrete_sequence=[RED], labels={"revenue": "Revenue ($)", "product_detail": ""})
+    fig.update_layout(height=340, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0), showlegend=False)
+    st.plotly_chart(fig, width='stretch')
+
+    st.subheader("Popularity vs. Revenue")
+    st.caption("Each dot is a product. Dashed lines mark the median units and median revenue in the current filter — the four quadrants correspond to Hero / Premium / Long Tail / Underperforming.")
+    med_units = prod_agg["units"].median()
+    med_rev = prod_agg["revenue"].median()
+    fig = px.scatter(prod_agg, x="units", y="revenue", color="segment", color_discrete_map=SEG_COLORS,
+                      hover_name="product_detail", size_max=12,
+                      labels={"units": "Units Sold (popularity)", "revenue": "Revenue ($)"})
+    fig.add_vline(x=med_units, line_dash="dash", line_color=TAN)
+    fig.add_hline(y=med_rev, line_dash="dash", line_color=TAN)
+    fig.update_traces(marker=dict(size=10, line=dict(width=1, color="white")))
+    fig.update_layout(height=460, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
+    st.plotly_chart(fig, width='stretch')
+
+# ===================== TAB 3: PARETO & SEGMENTATION =====================
+with tab_pareto:
+    c1, c2, c3, c4 = st.columns(4)
+    n80 = int((prod_agg["cum_revenue_pct"] <= 0.80).sum()) + 1
+    top20_n = max(1, int(round(len(prod_agg) * 0.2)))
+    top20_share = prod_agg.nsmallest(top20_n, "revenue_rank")["revenue"].sum() / total_rev_all if total_rev_all else 0
+    c1.metric("Products to reach 80% revenue", f"{n80} / {len(prod_agg)}")
+    c2.metric("Top 20% revenue share", f"{top20_share*100:.1f}%")
+    c3.metric("Class A products", int((prod_agg['abc_class'] == 'A').sum()))
+    c4.metric("Class C products", int((prod_agg['abc_class'] == 'C').sum()))
+
+    st.subheader("Pareto Chart — Cumulative Revenue Concentration")
+    pareto = prod_agg.sort_values("revenue_rank")
+    fig = go.Figure()
+    fig.add_bar(x=pareto["product_detail"], y=pareto["revenue"], name="Revenue", marker_color=BROWN, yaxis="y1")
+    fig.add_trace(go.Scatter(x=pareto["product_detail"], y=pareto["cum_revenue_pct"] * 100,
+                              name="Cumulative %", yaxis="y2", line=dict(color=BLUE, width=2)))
+    fig.add_hline(y=80, line_dash="dash", line_color=RED, yref="y2")
+    fig.update_layout(
+        height=420, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0),
+        xaxis=dict(showticklabels=False, title="Products (ranked by revenue)"),
+        yaxis=dict(title="Revenue ($)"),
+        yaxis2=dict(title="Cumulative %", overlaying="y", side="right", range=[0, 100]),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+    )
+    st.plotly_chart(fig, width='stretch')
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader("ABC Classification")
+        abc_rev = prod_agg.groupby("abc_class", as_index=False)["revenue"].sum()
+        fig = px.bar(abc_rev, x="abc_class", y="revenue", color="abc_class", color_discrete_map=ABC_COLORS,
+                     labels={"revenue": "Revenue ($)", "abc_class": "ABC Class"})
+        fig.update_layout(height=340, plot_bgcolor="white", showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig, width='stretch')
+    with c2:
+        st.subheader("Product Segmentation")
+        seg_rev = prod_agg.groupby("segment", as_index=False)["revenue"].sum()
+        fig = px.bar(seg_rev, x="segment", y="revenue", color="segment", color_discrete_map=SEG_COLORS,
+                     labels={"revenue": "Revenue ($)", "segment": ""})
+        fig.update_layout(height=340, plot_bgcolor="white", showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig, width='stretch')
+
+# ===================== TAB 4: DATA TABLE =====================
+with tab_table:
+    st.subheader("Product Drill-Down Table")
+    search = st.text_input("🔍 Search product name")
+    show = prod_agg.copy()
+    if search:
+        show = show[show["product_detail"].str.contains(search, case=False, na=False)]
+
+    show_display = show[[
+        "product_detail", "product_category", "product_type", "revenue", "units",
+        "avg_price", "revenue_pct", "revenue_rank", "volume_rank", "rank_delta", "abc_class", "segment"
+    ]].rename(columns={
+        "product_detail": "Product", "product_category": "Category", "product_type": "Type",
+        "revenue": "Revenue", "units": "Units", "avg_price": "Avg Price", "revenue_pct": "Rev %",
+        "revenue_rank": "Rev Rank", "volume_rank": "Sales Rank", "rank_delta": "Δ Rank",
+        "abc_class": "ABC", "segment": "Segment",
+    }).sort_values("Rev Rank")
+    show_display["Rev %"] = (show_display["Rev %"] * 100).round(2)
+
+    st.dataframe(
+        show_display,
+        width='stretch',
+        hide_index=True,
+        height=460,
+        column_config={
+            "Revenue": st.column_config.NumberColumn(format="$%.0f"),
+            "Avg Price": st.column_config.NumberColumn(format="$%.2f"),
+            "Rev %": st.column_config.ProgressColumn(
+                format="%.1f%%", min_value=0.0,
+                max_value=float(show_display["Rev %"].max()) if len(show_display) else 1.0,
+            ),
+        },
+    )
+
+    csv = show_display.to_csv(index=False).encode("utf-8")
+    st.download_button("⬇ Download this table as CSV", csv, "product_performance.csv", "text/csv")
+
+st.markdown("---")
+st.caption("Afficionado Coffee Roasters · Sales Intelligence Dashboard · Built with Streamlit · Data reconciles to the project's KPI summary.")
