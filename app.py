@@ -1,6 +1,8 @@
 """
 Afficionado Coffee Roasters — Sales Intelligence Dashboard
-Streamlit app for the Product Optimization & Revenue Contribution Analysis project.
+Refactored Streamlit app for production-quality portfolio presentation.
+- Preserves all original features and calculations.
+- Improves layout, styling, and code organization.
 Run locally with:  streamlit run app.py
 """
 
@@ -11,7 +13,7 @@ import plotly.graph_objects as go
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# PAGE CONFIG + BRAND STYLE
+# APP CONFIG + THEME
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="Afficionado Coffee Roasters — Sales Intelligence",
@@ -20,6 +22,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Color palette (kept from original)
 BROWN = "#6B4423"
 BROWN_DARK = "#3E2010"
 TAN = "#C49A6C"
@@ -34,6 +37,7 @@ SEG_COLORS = {"Hero": GREEN, "Premium": BLUE, "Long Tail": AMBER, "Underperformi
 ABC_COLORS = {"A": GREEN, "B": AMBER, "C": RED}
 CAT_PALETTE = [BROWN, TAN, TERRACOTTA, GOLD, GREEN, BLUE, AMBER, "#8A5A32", "#3E2010"]
 
+# Subtle global CSS to uplift the UI to a modern executive look
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -49,17 +53,23 @@ h1, h2, h3 {{ font-family: 'Fraunces', serif !important; color: {BROWN_DARK}; }}
 section[data-testid="stSidebar"] {{ background-color: #FFFFFF; border-right: 1px solid #E7DFD3; }}
 .roast-rule {{ height: 4px; width: 64px; border-radius: 2px; margin: 4px 0 18px 0;
     background: linear-gradient(90deg, #E8D4B8, {TAN}, #8A5A32, {BROWN_DARK}); }}
+
+/* Executive header styles */
+.exec-header {{ display:flex; align-items:center; gap:16px; margin-bottom:10px; }}
+.exec-badge {{ background: linear-gradient(90deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05)); padding:8px 12px; border-radius:8px; color:{BROWN_DARK}; font-weight:700; }}
+.small-muted {{ color:#7A6656; font-size:0.9rem; }}
+
 </style>
 """, unsafe_allow_html=True)
 
 DATA_DIR = Path(__file__).parent / "data"
 
-
 # ---------------------------------------------------------------------------
-# DATA LOADING
+# DATA LOADING & CLEANING
 # ---------------------------------------------------------------------------
 @st.cache_data
 def load_data():
+    """Load CSVs from the data/ folder and apply light cleaning to store names."""
     fact = pd.read_csv(DATA_DIR / "coffee_features.csv")
     prod_master = pd.read_csv(DATA_DIR / "product_summary.csv")
     store_master = pd.read_csv(DATA_DIR / "store_summary.csv")
@@ -71,29 +81,31 @@ def load_data():
     store_master["store_location"] = store_master["store_location"].apply(fix_store)
     return fact, prod_master, store_master
 
-
+# Load data once
 fact, prod_master, store_master = load_data()
 
+# Keep stable lists for filters
 ALL_STORES = sorted(fact["store_location"].unique())
 ALL_CATEGORIES = sorted(fact["product_category"].unique())
 
 # ---------------------------------------------------------------------------
-# SIDEBAR — FILTERS
+# SIDEBAR — FILTER CONTROLS
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("### ☕ Afficionado Coffee Roasters")
 st.sidebar.caption("Sales Intelligence — Filters")
 st.sidebar.markdown("---")
 
-
+# Reset helper
 def reset_filters():
     for k in ["f_stores", "f_categories", "f_types", "f_topn"]:
         if k in st.session_state:
             del st.session_state[k]
 
-
+# Store & category selectors
 st.sidebar.multiselect("Store Location", ALL_STORES, default=ALL_STORES, key="f_stores")
 st.sidebar.multiselect("Product Category", ALL_CATEGORIES, default=ALL_CATEGORIES, key="f_categories")
 
+# Derive types available based on selected categories
 types_available = sorted(
     fact.loc[fact["product_category"].isin(st.session_state.f_categories), "product_type"].unique()
 )
@@ -109,52 +121,29 @@ st.sidebar.button("↺ Reset all filters", on_click=reset_filters, width='stretc
 
 st.sidebar.markdown("---")
 st.sidebar.caption(
-    "Data: single-year transaction log across 3 NYC cafés — "
-    "Lower Manhattan, Hell's Kitchen, Astoria."
+    "Data: single-year transaction log across 3 NYC cafés — Lower Manhattan, Hell's Kitchen, Astoria."
 )
 
 # ---------------------------------------------------------------------------
-# APPLY FILTERS
+# APPLY FILTERS — create a filtered transactions frame
 # ---------------------------------------------------------------------------
-filtered = fact[
-    fact["store_location"].isin(st.session_state.f_stores)
-    & fact["product_category"].isin(st.session_state.f_categories)
-    & fact["product_type"].isin(st.session_state.f_types)
-].copy()
+def apply_filters(df):
+    return df[
+        df["store_location"].isin(st.session_state.f_stores)
+        & df["product_category"].isin(st.session_state.f_categories)
+        & df["product_type"].isin(st.session_state.f_types)
+    ].copy()
 
+filtered = apply_filters(fact)
 TOP_N = st.session_state.f_topn
 
-# ---------------------------------------------------------------------------
-# HEADER
-# ---------------------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem;font-weight:700;color:#D4845A;letter-spacing:.1em;'>PRODUCT OPTIMIZATION & REVENUE CONTRIBUTION ANALYSIS</div>", unsafe_allow_html=True)
-st.markdown("# How the roastery is performing")
-st.markdown("<div class='roast-rule'></div>", unsafe_allow_html=True)
-
+# If no data, surfacing a friendly message
 if filtered.empty:
     st.warning("No data matches the current filter selection. Try widening your filters in the sidebar.")
     st.stop()
 
 # ---------------------------------------------------------------------------
-# KPI ROW
-# ---------------------------------------------------------------------------
-total_revenue = filtered["revenue"].sum()
-total_products = filtered["product_id"].nunique()
-total_txns = len(filtered)
-total_units = filtered["transaction_qty"].sum()
-aov = total_revenue / total_txns if total_txns else 0
-
-k1, k2, k3, k4, k5 = st.columns(5)
-k1.metric("Total Revenue", f"${total_revenue:,.0f}")
-k2.metric("Total Transactions", f"{total_txns:,}")
-k3.metric("Units Sold", f"{total_units:,}")
-k4.metric("Average Order Value", f"${aov:,.2f}")
-k5.metric("Products in View", f"{total_products}")
-
-st.write("")
-
-# ---------------------------------------------------------------------------
-# PRODUCT-LEVEL AGGREGATION (recomputed live from the filtered transactions)
+# AGGREGATIONS (PRODUCT-LEVEL) — identical calculations to original
 # ---------------------------------------------------------------------------
 prod_agg = (
     filtered.groupby(["product_id", "product_detail", "product_category", "product_type"], as_index=False)
@@ -172,7 +161,44 @@ prod_agg["volume_rank"] = prod_agg["units"].rank(ascending=False, method="dense"
 prod_agg["rank_delta"] = prod_agg["volume_rank"] - prod_agg["revenue_rank"]
 
 # ---------------------------------------------------------------------------
-# TABS
+# PAGE HEADER (Executive style)
+# ---------------------------------------------------------------------------
+header_col1, header_col2 = st.columns([8, 2])
+with header_col1:
+    st.markdown("""
+    <div class='exec-header'>
+      <div>
+        <div class='exec-badge'>Afficionado — Sales Intelligence</div>
+        <h1 style='margin:6px 0 0 0;'>How the roastery is performing</h1>
+        <div class='small-muted'>Product Optimization & Revenue Contribution Analysis</div>
+      </div>
+    </div>
+    <div class='roast-rule'></div>
+    """, unsafe_allow_html=True)
+with header_col2:
+    st.write("")
+    st.caption("Afficionado Coffee Roasters")
+
+# ---------------------------------------------------------------------------
+# KPI ROW — preserve original KPI calculations and presentation
+# ---------------------------------------------------------------------------
+total_revenue = filtered["revenue"].sum()
+total_products = filtered["product_id"].nunique()
+total_txns = len(filtered)
+total_units = filtered["transaction_qty"].sum()
+aov = total_revenue / total_txns if total_txns else 0
+
+k1, k2, k3, k4, k5 = st.columns(5)
+k1.metric("Total Revenue", f"${total_revenue:,.0f}")
+k2.metric("Total Transactions", f"{total_txns:,}")
+k3.metric("Units Sold", f"{total_units:,}")
+k4.metric("Average Order Value", f"${aov:,.2f}")
+k5.metric("Products in View", f"{total_products}")
+
+st.write("")
+
+# ---------------------------------------------------------------------------
+# Tabs — organize the full set of visualizations (no chart removals)
 # ---------------------------------------------------------------------------
 tab_overview, tab_products, tab_pareto, tab_table = st.tabs(
     ["📊 Overview", "🏆 Product Analysis", "📈 Pareto & Segmentation", "🔍 Data Table"]
@@ -180,38 +206,42 @@ tab_overview, tab_products, tab_pareto, tab_table = st.tabs(
 
 # ===================== TAB 1: OVERVIEW =====================
 with tab_overview:
-    c1, c2 = st.columns([1.3, 1])
+    left_col, right_col = st.columns([1.4, 1])
 
-    with c1:
+    # Revenue by Category
+    with left_col:
         st.subheader("Revenue by Category")
         cat_rev = filtered.groupby("product_category", as_index=False)["revenue"].sum().sort_values("revenue", ascending=False)
-        fig = px.bar(cat_rev, x="revenue", y="product_category", orientation="h",
-                     color="product_category", color_discrete_sequence=CAT_PALETTE,
-                     labels={"revenue": "Revenue ($)", "product_category": ""})
-        fig.update_layout(showlegend=False, yaxis={"categoryorder": "total ascending"}, height=380,
-                           plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(fig, width='stretch')
+        fig_cat = px.bar(cat_rev, x="revenue", y="product_category", orientation="h",
+                         color="product_category", color_discrete_sequence=CAT_PALETTE,
+                         labels={"revenue": "Revenue ($)", "product_category": ""})
+        fig_cat.update_layout(showlegend=False, yaxis={"categoryorder": "total ascending"}, height=380,
+                               plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig_cat, use_container_width=True)
 
-    with c2:
+    # Revenue by Store
+    with right_col:
         st.subheader("Revenue by Store")
         store_rev = filtered.groupby("store_location", as_index=False)["revenue"].sum()
-        fig = px.pie(store_rev, names="store_location", values="revenue", hole=0.55,
+        fig_store = px.pie(store_rev, names="store_location", values="revenue", hole=0.55,
                      color="store_location",
                      color_discrete_map={"Lower Manhattan": BROWN, "Hell's Kitchen": TAN, "Astoria": TERRACOTTA})
-        fig.update_layout(height=380, margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(fig, width='stretch')
+        fig_store.update_layout(height=380, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig_store, use_container_width=True)
 
+    # Revenue by Time Slot
     st.subheader("Revenue by Time Slot")
     slot_order = ["Morning", "Afternoon", "Evening", "Night"]
     slot_rev = filtered.groupby("time_slot", as_index=False)["revenue"].sum()
     slot_rev["time_slot"] = pd.Categorical(slot_rev["time_slot"], categories=slot_order, ordered=True)
     slot_rev = slot_rev.sort_values("time_slot")
-    fig = px.bar(slot_rev, x="time_slot", y="revenue", color="time_slot",
+    fig_slot = px.bar(slot_rev, x="time_slot", y="revenue", color="time_slot",
                  color_discrete_map={"Morning": GOLD, "Afternoon": BROWN, "Evening": BROWN_DARK, "Night": BLUE},
                  labels={"revenue": "Revenue ($)", "time_slot": ""})
-    fig.update_layout(showlegend=False, height=320, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
-    st.plotly_chart(fig, width='stretch')
+    fig_slot.update_layout(showlegend=False, height=320, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
+    st.plotly_chart(fig_slot, use_container_width=True)
 
+    # Peak hour caption
     hour_rev = filtered.groupby("hour", as_index=False)["revenue"].sum()
     peak_hour = int(hour_rev.loc[hour_rev["revenue"].idxmax(), "hour"])
     st.caption(f"⏰ Peak trading hour in the current filter selection: **{peak_hour:02d}:00**")
@@ -222,43 +252,46 @@ with tab_products:
     top_vol = prod_agg.nsmallest(TOP_N, "volume_rank")
     bottom_rev = prod_agg.nlargest(TOP_N, "revenue_rank")
 
+    # Top revenue and top volume side-by-side
     c1, c2 = st.columns(2)
     with c1:
         st.subheader(f"Top {TOP_N} Products — Revenue")
-        fig = px.bar(top_rev.sort_values("revenue"), x="revenue", y="product_detail", orientation="h",
+        fig_top_rev = px.bar(top_rev.sort_values("revenue"), x="revenue", y="product_detail", orientation="h",
                      color="segment", color_discrete_map=SEG_COLORS,
                      labels={"revenue": "Revenue ($)", "product_detail": ""})
-        fig.update_layout(height=420, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0),
+        fig_top_rev.update_layout(height=420, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0),
                            legend=dict(orientation="h", yanchor="bottom", y=1.02))
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig_top_rev, use_container_width=True)
 
     with c2:
         st.subheader(f"Top {TOP_N} Products — Units Sold")
-        fig = px.bar(top_vol.sort_values("units"), x="units", y="product_detail", orientation="h",
+        fig_top_vol = px.bar(top_vol.sort_values("units"), x="units", y="product_detail", orientation="h",
                      color="segment", color_discrete_map=SEG_COLORS,
                      labels={"units": "Units Sold", "product_detail": ""})
-        fig.update_layout(height=420, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0),
+        fig_top_vol.update_layout(height=420, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0),
                            legend=dict(orientation="h", yanchor="bottom", y=1.02))
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig_top_vol, use_container_width=True)
 
+    # Bottom products
     st.subheader(f"Bottom {TOP_N} Products — Revenue")
-    fig = px.bar(bottom_rev.sort_values("revenue", ascending=False), x="revenue", y="product_detail", orientation="h",
+    fig_bottom = px.bar(bottom_rev.sort_values("revenue", ascending=False), x="revenue", y="product_detail", orientation="h",
                  color_discrete_sequence=[RED], labels={"revenue": "Revenue ($)", "product_detail": ""})
-    fig.update_layout(height=340, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0), showlegend=False)
-    st.plotly_chart(fig, width='stretch')
+    fig_bottom.update_layout(height=340, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0), showlegend=False)
+    st.plotly_chart(fig_bottom, use_container_width=True)
 
+    # Popularity vs Revenue scatter
     st.subheader("Popularity vs. Revenue")
     st.caption("Each dot is a product. Dashed lines mark the median units and median revenue in the current filter — the four quadrants correspond to Hero / Premium / Long Tail / Underperforming.")
     med_units = prod_agg["units"].median()
     med_rev = prod_agg["revenue"].median()
-    fig = px.scatter(prod_agg, x="units", y="revenue", color="segment", color_discrete_map=SEG_COLORS,
+    fig_scatter = px.scatter(prod_agg, x="units", y="revenue", color="segment", color_discrete_map=SEG_COLORS,
                       hover_name="product_detail", size_max=12,
                       labels={"units": "Units Sold (popularity)", "revenue": "Revenue ($)"})
-    fig.add_vline(x=med_units, line_dash="dash", line_color=TAN)
-    fig.add_hline(y=med_rev, line_dash="dash", line_color=TAN)
-    fig.update_traces(marker=dict(size=10, line=dict(width=1, color="white")))
-    fig.update_layout(height=460, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
-    st.plotly_chart(fig, width='stretch')
+    fig_scatter.add_vline(x=med_units, line_dash="dash", line_color=TAN)
+    fig_scatter.add_hline(y=med_rev, line_dash="dash", line_color=TAN)
+    fig_scatter.update_traces(marker=dict(size=10, line=dict(width=1, color="white")))
+    fig_scatter.update_layout(height=460, plot_bgcolor="white", margin=dict(l=0, r=0, t=10, b=0))
+    st.plotly_chart(fig_scatter, use_container_width=True)
 
 # ===================== TAB 3: PARETO & SEGMENTATION =====================
 with tab_pareto:
@@ -285,23 +318,24 @@ with tab_pareto:
         yaxis2=dict(title="Cumulative %", overlaying="y", side="right", range=[0, 100]),
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, use_container_width=True)
 
+    # ABC & Segmentation charts
     c1, c2 = st.columns(2)
     with c1:
         st.subheader("ABC Classification")
         abc_rev = prod_agg.groupby("abc_class", as_index=False)["revenue"].sum()
-        fig = px.bar(abc_rev, x="abc_class", y="revenue", color="abc_class", color_discrete_map=ABC_COLORS,
+        fig_abc = px.bar(abc_rev, x="abc_class", y="revenue", color="abc_class", color_discrete_map=ABC_COLORS,
                      labels={"revenue": "Revenue ($)", "abc_class": "ABC Class"})
-        fig.update_layout(height=340, plot_bgcolor="white", showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(fig, width='stretch')
+        fig_abc.update_layout(height=340, plot_bgcolor="white", showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig_abc, use_container_width=True)
     with c2:
         st.subheader("Product Segmentation")
         seg_rev = prod_agg.groupby("segment", as_index=False)["revenue"].sum()
-        fig = px.bar(seg_rev, x="segment", y="revenue", color="segment", color_discrete_map=SEG_COLORS,
+        fig_seg = px.bar(seg_rev, x="segment", y="revenue", color="segment", color_discrete_map=SEG_COLORS,
                      labels={"revenue": "Revenue ($)", "segment": ""})
-        fig.update_layout(height=340, plot_bgcolor="white", showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(fig, width='stretch')
+        fig_seg.update_layout(height=340, plot_bgcolor="white", showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig_seg, use_container_width=True)
 
 # ===================== TAB 4: DATA TABLE =====================
 with tab_table:
@@ -322,9 +356,10 @@ with tab_table:
     }).sort_values("Rev Rank")
     show_display["Rev %"] = (show_display["Rev %"] * 100).round(2)
 
+    # Use Streamlit's column_config for nicer formatting
     st.dataframe(
         show_display,
-        width='stretch',
+        use_container_width=True,
         hide_index=True,
         height=460,
         column_config={
@@ -340,5 +375,8 @@ with tab_table:
     csv = show_display.to_csv(index=False).encode("utf-8")
     st.download_button("⬇ Download this table as CSV", csv, "product_performance.csv", "text/csv")
 
+# ---------------------------------------------------------------------------
+# FOOTER
+# ---------------------------------------------------------------------------
 st.markdown("---")
 st.caption("Afficionado Coffee Roasters · Sales Intelligence Dashboard · Built with Streamlit · Data reconciles to the project's KPI summary.")
