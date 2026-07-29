@@ -1,0 +1,4 @@
+store_id,store_location,total_revenue,total_qty,transaction_count,avg_order_value,revenue_share_pct
+3,Astoria,232243.91,70991,50599,4.589891302199648,33.23
+5,Lower Manhattan,230057.25,71742,47782,4.814726256749403,32.92
+8,Hell'S Kitchen,236511.17,71737,50735,4.661696462008476,33.84

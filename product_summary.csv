@@ -1,0 +1,81 @@
+product_id,product_detail,product_category,product_type,total_revenue,total_qty,transaction_count,avg_unit_price,revenue_per_unit,revenue_pct,abc_class,revenue_rank,volume_rank,segment
+1,Brazilian - Organic,Coffee Beans,Organic Beans,3852.0,214,209,18.0,18.0,0.5512,C,58,60,Underperforming
+2,Our Old Time Diner Blend,Coffee Beans,House Blend Beans,3294.0,183,183,18.0,18.0,0.4714,C,59,62,Underperforming
+3,Espresso Roast,Coffee Beans,Espresso Beans,2492.75,169,169,14.75,14.75,0.3567,C,63,63,Underperforming
+4,Primo Espresso Roast,Coffee Beans,Espresso Beans,3067.5,150,150,20.45,20.45,0.439,C,60,69,Underperforming
+5,Columbian Medium Roast,Coffee Beans,Gourmet Beans,2220.0,148,148,15.0,15.0,0.3177,C,65,70,Underperforming
+6,Ethiopia,Coffee Beans,Gourmet Beans,4578.0,218,218,21.0,21.0,0.6551,C,56,59,Underperforming
+7,Jamacian Coffee River,Coffee Beans,Premium Beans,2883.5,146,146,19.75,19.75,0.4126,C,62,71,Underperforming
+8,Civet Cat,Coffee Beans,Premium Beans,11700.0,260,190,45.0,45.0,1.6743,A,27,56,Premium
+9,Organic Decaf Blend,Coffee Beans,Organic Beans,4657.5,206,206,22.609223300970875,22.609223300970875,0.6665,C,55,61,Underperforming
+10,Guatemalan Sustainably Grown,Coffee Beans,Green Beans,1340.0,134,134,10.0,10.0,0.1918,C,76,73,Underperforming
+11,Lemon Grass,Loose Tea,Herbal Tea,1360.3999999999999,152,152,8.95,8.95,0.1947,C,75,68,Underperforming
+12,Peppermint,Loose Tea,Herbal Tea,1369.35,153,153,8.95,8.95,0.196,C,74,67,Underperforming
+13,English Breakfast,Loose Tea,Black Tea,1440.9499999999998,161,161,8.95,8.95,0.2062,C,73,65,Underperforming
+14,Earl Grey,Loose Tea,Black Tea,1270.8999999999999,142,142,8.95,8.95,0.1819,C,78,72,Underperforming
+15,Serenity Green Tea,Loose Tea,Green Tea,1470.75,159,159,9.25,9.25,0.2105,C,72,66,Underperforming
+16,Traditional Blend Chai,Loose Tea,Chai Tea,1369.35,153,153,8.95,8.95,0.196,C,74,67,Underperforming
+17,Morning Sunrise Chai,Loose Tea,Chai Tea,1596.0,168,168,9.5,9.5,0.2284,C,71,64,Underperforming
+18,Spicy Eye Opener Chai,Loose Tea,Chai Tea,1335.8999999999999,122,122,10.95,10.95,0.1912,C,77,74,Underperforming
+19,Dark Chocolate,Packaged Chocolate,Drinking Chocolate,755.2,118,118,6.4,6.4,0.1081,C,79,75,Underperforming
+20,Sustainably Grown Organic,Packaged Chocolate,Organic Chocolate,1679.6,221,221,7.6,7.6,0.2404,C,70,58,Underperforming
+21,Chili Mayan,Packaged Chocolate,Drinking Chocolate,1972.84,148,148,13.33,13.33,0.2823,C,68,70,Underperforming
+22,Our Old Time Diner Blend Sm,Coffee,Drip Coffee,8968.0,4484,2919,2.0,2.0,1.2833,B,41,9,Long Tail
+23,Our Old Time Diner Blend Rg,Coffee,Drip Coffee,11025.0,4410,2894,2.5,2.5,1.5777,A,34,13,Hero
+24,Our Old Time Diner Blend Lg,Coffee,Drip Coffee,11991.0,3997,2664,3.0,3.0,1.7159,A,25,39,Hero
+25,Brazilian Sm,Coffee,Organic Brewed Coffee,9482.0,4310,2814,2.2,2.2,1.3569,B,40,23,Hero
+26,Brazilian Rg,Coffee,Organic Brewed Coffee,13155.0,4385,2904,3.0,3.0,1.8825,A,15,17,Hero
+27,Brazilian Lg,Coffee,Organic Brewed Coffee,15109.5,4317,2771,3.5,3.5,2.1622,A,10,22,Hero
+28,Columbian Medium Roast Sm,Coffee,Gourmet Brewed Coffee,8356.0,4178,2728,2.0,2.0,1.1957,B,44,31,Long Tail
+29,Columbian Medium Roast Rg,Coffee,Gourmet Brewed Coffee,11367.5,4547,3013,2.5,2.5,1.6267,A,31,6,Hero
+30,Columbian Medium Roast Lg,Coffee,Gourmet Brewed Coffee,12585.0,4195,2731,3.0,3.0,1.8009,A,20,30,Hero
+31,Ethiopia Sm,Coffee,Gourmet Brewed Coffee,9752.6,4433,2833,2.2,2.2,1.3956,B,39,12,Hero
+32,Ethiopia Rg,Coffee,Gourmet Brewed Coffee,13179.0,4393,2866,3.0,3.0,1.8859,A,14,16,Hero
+33,Ethiopia Lg,Coffee,Gourmet Brewed Coffee,14794.5,4227,2741,3.5,3.5,2.1171,A,11,27,Hero
+34,Jamaican Coffee River Sm,Coffee,Premium Brewed Coffee,9844.1,4018,2630,2.45,2.45,1.4087,B,38,37,Hero
+35,Jamaican Coffee River Rg,Coffee,Premium Brewed Coffee,12455.800000000001,4018,2594,3.1,3.1,1.7824,A,23,37,Hero
+36,Jamaican Coffee River Lg,Coffee,Premium Brewed Coffee,16481.25,4395,2911,3.75,3.75,2.3585,A,7,15,Hero
+37,Espresso Shot,Coffee,Barista Espresso,12495.0,4165,2730,3.0,3.0,1.788,A,22,34,Hero
+38,Latte,Coffee,Barista Espresso,17257.5,4602,2990,3.75,3.75,2.4695,A,6,4,Hero
+39,Latte Rg,Coffee,Barista Espresso,19112.25,4497,2896,4.25,4.25,2.735,A,3,8,Hero
+40,Cappuccino,Coffee,Barista Espresso,15997.5,4266,2793,3.75,3.75,2.2892,A,9,25,Hero
+41,Cappuccino Lg,Coffee,Barista Espresso,17641.75,4151,2772,4.25,4.25,2.5245,A,4,35,Hero
+42,Lemon Grass Rg,Tea,Brewed Herbal Tea,10812.5,4325,2792,2.5,2.5,1.5473,A,35,21,Hero
+43,Lemon Grass Lg,Tea,Brewed Herbal Tea,12267.0,4089,2647,3.0,3.0,1.7554,A,24,36,Hero
+44,Peppermint Rg,Tea,Brewed Herbal Tea,11410.0,4564,2949,2.5,2.5,1.6328,A,30,5,Hero
+45,Peppermint Lg,Tea,Brewed Herbal Tea,13050.0,4350,2857,3.0,3.0,1.8675,A,16,18,Hero
+46,Serenity Green Tea Rg,Tea,Brewed Green Tea,11192.5,4477,2921,2.5,2.5,1.6016,A,33,10,Hero
+47,Serenity Green Tea Lg,Tea,Brewed Green Tea,12660.0,4220,2750,3.0,3.0,1.8116,A,19,28,Hero
+48,English Breakfast Rg,Tea,Brewed Black Tea,10500.0,4200,2743,2.5,2.5,1.5025,B,37,29,Hero
+49,English Breakfast Lg,Tea,Brewed Black Tea,12927.0,4309,2852,3.0,3.0,1.8499,A,17,24,Hero
+50,Earl Grey Rg,Tea,Brewed Black Tea,11770.0,4708,3053,2.5,2.5,1.6843,A,26,1,Hero
+51,Earl Grey Lg,Tea,Brewed Black Tea,12735.0,4245,2702,3.0,3.0,1.8224,A,18,26,Hero
+52,Traditional Blend Chai Rg,Tea,Brewed Chai Tea,11280.0,4512,2955,2.5,2.5,1.6142,A,32,7,Hero
+53,Traditional Blend Chai Lg,Tea,Brewed Chai Tea,12522.0,4174,2716,3.0,3.0,1.7919,A,21,32,Hero
+54,Morning Sunrise Chai Rg,Tea,Brewed Chai Tea,11607.5,4643,3026,2.5,2.5,1.661,A,29,3,Hero
+55,Morning Sunrise Chai Lg,Tea,Brewed Chai Tea,17384.0,4346,2830,4.0,4.0,2.4876,A,5,19,Hero
+56,Spicy Eye Opener Chai Rg,Tea,Brewed Chai Tea,10636.05,4171,2705,2.55,2.55,1.522,B,36,33,Hero
+57,Spicy Eye Opener Chai Lg,Tea,Brewed Chai Tea,13652.4,4404,2951,3.1,3.1,1.9537,A,13,14,Hero
+58,Dark Chocolate Rg,Drinking Chocolate,Hot Chocolate,14024.5,4007,2636,3.5,3.5,2.0069,A,12,38,Hero
+59,Dark Chocolate Lg,Drinking Chocolate,Hot Chocolate,21006.0,4668,3029,4.5,4.5,3.006,A,2,2,Hero
+60,Sustainably Grown Organic Rg,Drinking Chocolate,Hot Chocolate,16233.75,4329,2842,3.75,3.75,2.323,A,8,20,Hero
+61,Sustainably Grown Organic Lg,Drinking Chocolate,Hot Chocolate,21151.75,4453,2961,4.75,4.75,3.0268,A,1,11,Hero
+63,Carmel Syrup,Flavours,Regular Syrup,2060.8,2576,1725,0.8,0.8,0.2949,C,67,44,Underperforming
+64,Hazelnut Syrup,Flavours,Regular Syrup,1897.6000000000001,2372,1521,0.7999999999999999,0.8,0.2715,C,69,46,Underperforming
+65,Sugar Free Vanilla Syrup,Flavours,Sugar Free Syrup,2324.0,2905,1811,0.8000000000000002,0.8,0.3326,C,64,42,Underperforming
+69,Hazelnut Biscotti,Bakery,Biscotti,6608.01,2028,2009,3.258466898954704,3.258387573964497,0.9456,B,51,48,Underperforming
+70,Cranberry Scone,Bakery,Scone,6818.44,2092,2077,3.259359653346172,3.2592925430210324,0.9757,B,49,47,Underperforming
+71,Chocolate Croissant,Bakery,Pastry,11625.98,3096,3076,3.7551950585175553,3.75516149870801,1.6637,A,28,41,Premium
+72,Ginger Scone,Bakery,Scone,8011.61,2540,2324,3.183997418244406,3.1541771653543305,1.1465,B,45,45,Underperforming
+73,Almond Croissant,Bakery,Pastry,7168.13,1911,1903,3.7509879138202837,3.7509837781266353,1.0258,B,47,52,Underperforming
+74,Ginger Biscotti,Bakery,Biscotti,6436.56,1836,1811,3.505831032578686,3.5057516339869284,0.9211,B,52,53,Underperforming
+75,Croissant,Bakery,Pastry,6861.88,1954,1933,3.511836523538541,3.511709314227226,0.9819,B,48,50,Underperforming
+76,Chocolate Chip Biscotti,Bakery,Biscotti,6748.96,1924,1891,3.5079111581173983,3.507775467775468,0.9658,B,50,51,Underperforming
+77,Oatmeal Scone,Bakery,Scone,5460.0,1820,1812,3.0,3.0,0.7813,C,54,54,Underperforming
+78,Scottish Cream Scone,Bakery,Scone,8949.45,1985,1952,4.5086834016393444,4.508539042821159,1.2807,B,42,49,Underperforming
+79,Jumbo Savory Scone,Bakery,Scone,7626.62,2028,2008,3.7607669322709163,3.7606607495069033,1.0914,B,46,48,Underperforming
+81,I Need My Bean! T-Shirt,Branded,Clothing,6163.0,221,221,27.8868778280543,27.8868778280543,0.8819,C,53,58,Underperforming
+82,I Need My Bean! Diner Mug,Branded,Housewares,2935.0,240,222,12.247747747747749,12.229166666666666,0.42,C,61,57,Underperforming
+83,I Need My Bean! Latte Cup,Branded,Housewares,4509.0,315,304,14.325657894736842,14.314285714285715,0.6452,C,57,55,Underperforming
+84,Chocolate Syrup,Flavours,Regular Syrup,2126.4,2658,1733,0.8,0.8,0.3043,C,66,43,Underperforming
+87,Ouro Brasileiro Shot,Coffee,Barista Espresso,8902.2,3262,2222,2.696219621962196,2.7290619251992645,1.2739,B,43,40,Underperforming
